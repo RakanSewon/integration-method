@@ -54,16 +54,20 @@ if __name__ == "__main__":
 
     #5.) Gauss
     print("===============GAUSSIAN QUADRATURE===============")
+
+    f = lambda x: math.cos(x)
+    g = lambda x: pow(x, 2)
+
     a = 0
     b = PI/2
-    for n in range(1, 11):
-        result = gauss_1(a, b, n)
+    for n in range(1, 5):
+        result = gauss(f, a, b, n)
         print (f"n={n}, hasil = {result}")
 
     print()
 
     a = 0
     b = 1
-    for n in range(1, 11):
-        result = gauss_2(a, b, n)
+    for n in range(1, 5):
+        result = gauss(g, a, b, n)
         print (f"n={n}, hasil = {result}")

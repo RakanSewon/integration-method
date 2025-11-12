@@ -1,4 +1,5 @@
 
+
 \documentclass[a4paper, 11pt]{article} % Diambil dari main.tex 
 
 % --- Paket-paket dari main.tex ---
@@ -399,7 +400,30 @@ Estimated local error: 0.0
 \subsection{Pengertian dan Rumus} % 
 Kuadratur Gauss (secara spesifik Gauss-Legendre) adalah metode yang sangat berbeda dan kuat. Alih-alih menggunakan titik-titik yang berjarak sama (seperti Trapesium/Simpson), metode ini secara cerdas memilih $n$ titik (disebut \textbf{nodes}, $x_i$) dan \textbf{bobot} ($w_i$) yang optimal. 
 
-Implementasi Kuadratur Gauss menggunakan \textit{library} seperti NumPy karena metode ini fundamentalnya bergantung pada sekumpulan "nodes" (titik $x_i$) dan "weights" (bobot $w_i$) yang optimal, yang merupakan akar-akar dari Polinomial Legendre. Menghitung nilai-nilai ini dari awal adalah tugas matematika yang sangat kompleks dan intensif secara komputasi, membutuhkan algoritma pencarian akar numerik yang canggih. \textit{Library} \texttt{numpy} menyediakan fungsi \texttt{leggauss(n)} yang langsung memberikan nilai-nilai presisi tinggi ini secara instan, sehingga kita bisa fokus pada logika integrasinya (transformasi interval dan penjumlahan $\sum w_i f(t_i)$) tanpa harus mengimplementasikan ulang kalkulasi matematika yang rumit tersebut.
+Implementasi Kuadratur Gauss praktisnya menggunakan \textit{library} seperti NumPy karena metode ini fundamentalnya bergantung pada sekumpulan "nodes" (titik $x_i$) dan "weights" (bobot $w_i$) yang optimal, yang merupakan akar-akar dari Polinomial Legendre. Menghitung nilai-nilai ini dari awal adalah tugas matematika yang sangat kompleks dan intensif secara komputasi, membutuhkan algoritma pencarian akar numerik yang canggih. Namun, dalam percobaan ini, Kuadratur Gauss hanya diimplementasikan hingga $n=4$, sehingga kita dapat menggunakan nilai bobot dan titik yang mendasar saja. Berikut adalah nilai titik $x_i$ dan bobot $w_i$ untuk Kuadratur Gauss hingga $n=4$:
+
+\begin{table}[h!]
+\centering
+\caption{Titik dan Bobot pada Kuadratur Gauss}
+\begin{tabular}{c c c}
+\hline
+$n$ & $x_i$ & $w_i$ \\
+\hline
+1 & $0.0$ & 2.0 \\
+\hline
+2 & $\pm0.5773502692$ & 1.0 \\
+\hline
+3 & $\pm0.7745966692$ & 0.5555555556 \\
+  & 0.0               & 0.8888888889 \\
+\hline
+4 & $\pm0.8611363116$ & 0.3478548451 \\
+  & $\pm0.3399810436$ & 0.6521451549 \\
+\hline
+\end{tabular}
+\label{tab:parameter_gauss}
+\end{table}
+
+
 \begin{itemize}
     \item Titik-titik ini adalah akar dari Polinomial Legendre. % 
     \item Keajaibannya adalah: $n$-titik Kuadratur Gauss dapat mengintegrasikan polinomial derajat $\le 2n-1$ secara \textbf{eksak}. % 
@@ -410,41 +434,65 @@ Untuk mengubah interval $[a, b]$ ke $[-1, 1]$, kita gunakan transformasi: %
 \[ t = \frac{x+1}{2}(b-a) + a \quad \implies \quad \int_a^b f(t) \, dt \approx \frac{b-a}{2} \sum_{i=1}^n w_i f(t_i) \] % 
 
 \subsection{Implementasi Kode} % 
-Kode berikut (dari \texttt{gauss\_1.py} dan \texttt{gauss\_2.py}) mengimplementasikan Kuadratur Gauss menggunakan \texttt{numpy} untuk mendapatkan nilai $x_i$ dan $w_i$. % 
+Berikut adalah kode (dari \texttt{gauss.py}) implementasi Kuadratur Gauss menggunakan data $x_i$ dan $w_i$ dari tabel \ref{tab:parameter_gauss} sebagai parameter. 
 
 % --- [MODIFIKASI GAUSS CODE BLOCKS: VERTICAL] ---
 \begin{figure}[H]
     \centering % Opsional: untuk menengahkan blok kode
     
     % --- Kode Pertama ---
-    \begin{lstlisting}[language=Python, caption={Fungsi gauss.py (untuk $\cos(x)$)}, label=list:gauss1] 
-    import numpy as np
-    import math
-    pi = math.pi
+    \begin{lstlisting}[language=Python, caption={Fungsi gauss.py}, label=list:gauss] 
+import math
+PI = math.pi
 
-    def gauss_1(a, b, n):
-        x, w = np.polynomial.legendre.leggauss(n)
-        t = (x+1)*(b-a)/2 + a
-        return (b-a)*np.sum(w*np.cos(t))/2
-    \end{lstlisting} 
-    
-    \vspace{1em} % Memberi sedikit jarak vertikal antar blok kode
-
-    % --- Kode Kedua ---
-    \begin{lstlisting}[language=Python, caption={Fungsi gauss.py (untuk $x^2$)}, label=list:gauss2]
-    import numpy as np
-    
-    def gauss_2(a, b, n):
-        x, w = np.polynomial.legendre.leggauss(n)
-        t = (x+1)*(b-a)/2 + a
-        return (b-a)*np.sum(w*(t**2))/2
+def gauss(f, a, b, n):
+    data = {
+        1: ([0.0], [2.0]),
+        2: ([-0.5773502692, 0.5773502692], [1.0, 1.0]),
+        3: ([0.0, -0.7745966692, 0.7745966692], [0.8888889, 0.5555556, 0.5555556]),
+        4: ([-0.8611363116, -0.3399810436, 0.3399810436, 0.8611363116], [0.3478548451, 0.6521451549, 0.6521451549, 0.3478548451]),
+    }
+    x, w = data[n]
+    total = 0
+    for i in range(n):
+        xi = 0.5 * (b - a) * x[i] + 0.5 * (a + b)
+        total += w[i] * f(xi)
+    return 0.5 * (b - a) * total
     \end{lstlisting} 
     
     % --- Caption Utama ---
-    \caption{Implementasi Kuadratur Gauss}
+   % \caption{Implementasi Kuadratur Gauss}
 \end{figure}
 % --- [AKHIR MODIFIKASI GAUSS] ---
 
+Namun, memasukkan parameter secara manual bukanlah praktik yang standar dan efisien. Dalam skenario asli, akan lebih baik jika komputasi Kuadratur Gauss dilakukan menggunakan fungsi bawaan dari \textit{library} \texttt{numpy} yang sudah termasuk parameter $x_i$ dan $w_i$. Kode berikut (dari \texttt{gaussWithNumpy.py}) mengimplementasikan Kuadratur Gauss menggunakan \texttt{numpy} untuk mendapatkan nilai $x_i$ dan $w_i$. % 
+
+% --- [MODIFIKASI GAUSS CODE BLOCKS: VERTICAL] ---
+\begin{figure}[H]
+    \centering % Opsional: untuk menengahkan blok kode
+    
+    % --- Kode Pertama ---
+    \begin{lstlisting}[language=Python, caption={Fungsi gaussWithNumpy.py}, label=list:gaussWithNumpy] 
+import numpy as np
+import math
+pi = math.pi
+
+def gauss_1(a, b, n):
+    x, w = np.polynomial.legendre.leggauss(n)
+    t = (x+1)*(b-a)/2 + a
+    return (b-a)*np.sum(w*np.cos(t))/2
+
+def gauss_2(a, b, n):
+    x, w = np.polynomial.legendre.leggauss(n)
+    t = (x+1)*(b-a)/2 + a
+    return (b-a)*np.sum(w*(t**2))/2
+    \end{lstlisting} 
+    
+    % --- Caption Utama ---
+   % \caption{Implementasi Kuadratur Gauss}
+\end{figure}
+% --- [AKHIR MODIFIKASI GAUSS] ---
+Hasil kedua metode sama.
 
 \subsection{Hasil Perhitungan dan Analisis Error} % 
 Output dari kode di atas untuk $n=1$ sampai $n=5$ titik: % 
